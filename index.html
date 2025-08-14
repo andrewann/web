@@ -1,39 +1,362 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Анимированный шар</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Геометрия — интерактив</title>
+<meta name="theme-color" content="#0ea5e9" />
 <style>
-  body {
-    margin: 0;
-    background: linear-gradient(120deg, #1e3c72, #2a5298);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  :root { --bg:#0b1220; --panel:#0f1a2f; --accent:#0ea5e9; }
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, #123, transparent), var(--bg); color:#fff; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;}
+  #wrap{position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto}
+  #topbar, #bottombar{
+    display:flex; gap:8px; align-items:center; padding:10px;
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
-  .ball {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ff7e5f, #feb47b);
-    animation: move 4s ease-in-out infinite alternate, colorchange 6s linear infinite;
+  #topbar{ border-bottom:1px solid rgba(255,255,255,.08); }
+  #bottombar{ border-top:1px solid rgba(255,255,255,.08); }
+  .btn{
+    border:none; border-radius:12px; padding:8px 12px; background:#1a2a48; color:#fff; font-weight:600;
   }
-  @keyframes move {
-    0% { transform: translate(-150px, -150px); }
-    50% { transform: translate(150px, -150px); }
-    100% { transform: translate(0px, 150px); }
-  }
-  @keyframes colorchange {
-    0% { background: radial-gradient(circle at 30% 30%, #ff7e5f, #feb47b); }
-    50% { background: radial-gradient(circle at 30% 30%, #6a11cb, #2575fc); }
-    100% { background: radial-gradient(circle at 30% 30%, #ff7e5f, #feb47b); }
-  }
+  .btn[data-active="true"]{ outline:2px solid var(--accent); background:#16345a; }
+  .btn:active{ transform:translateY(1px) }
+  .grow{flex:1}
+  #info{opacity:.85; font-size:.9rem}
+  #canvas{ width:100%; height:100%; touch-action:none; display:block; }
+  .chip{padding:6px 10px; border-radius:999px; background:#16345a; border:1px solid rgba(255,255,255,.1)}
+  input[type="range"]{ width:120px }
 </style>
 </head>
 <body>
-  <div class="ball"></div>
+  <div id="wrap">
+    <div id="topbar">
+      <button class="btn" id="shape-c" title="Круг">Круг</button>
+      <button class="btn" id="shape-s" title="Квадрат">Квадрат</button>
+      <button class="btn" id="shape-t" title="Треугольник">Треуг.</button>
+      <div class="chip">Размер <input type="range" id="size" min="16" max="120" value="48"></div>
+      <div class="chip">Цвет <input type="color" id="color" value="#4ade80"></div>
+      <div class="grow"></div>
+      <button class="btn" id="gravity">Гравитация</button>
+      <button class="btn" id="bounce">Прыжки</button>
+      <button class="btn" id="pause">Пауза</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div id="bottombar">
+      <div id="info">Тап — добавить | перетяни — брось с инерцией | двойной тап по фигуре — перекрасить</div>
+      <div class="grow"></div>
+      <button class="btn" id="shuffle">Случайные</button>
+      <button class="btn" id="clear">Очистить</button>
+      <button class="btn" id="export">PNG</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== Canvas setup with HiDPI scaling ======
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.max(1, window.devicePixelRatio || 1);
+  function fit() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = Math.floor(rect.width * DPR);
+    canvas.height = Math.floor(rect.height * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  new ResizeObserver(fit).observe(canvas);
+  fit();
+
+  // ====== State ======
+  const GRAVITY = { on:false, g:1200 };   // px/s^2
+  const BOUNCE  = { on:true, elasticity:0.75 };
+  let paused = false;
+
+  let shapeType = 'circle'; // 'circle' | 'square' | 'triangle'
+  const UI = {
+    c: document.getElementById('shape-c'),
+    s: document.getElementById('shape-s'),
+    t: document.getElementById('shape-t'),
+    size: document.getElementById('size'),
+    color: document.getElementById('color'),
+    grav: document.getElementById('gravity'),
+    bnc: document.getElementById('bounce'),
+    pause: document.getElementById('pause'),
+    shuffle: document.getElementById('shuffle'),
+    clear: document.getElementById('clear'),
+    export: document.getElementById('export'),
+  };
+  function updateShapeButtons(){
+    UI.c.dataset.active = (shapeType==='circle');
+    UI.s.dataset.active = (shapeType==='square');
+    UI.t.dataset.active = (shapeType==='triangle');
+  }
+  UI.c.onclick = () => { shapeType='circle'; updateShapeButtons(); };
+  UI.s.onclick = () => { shapeType='square'; updateShapeButtons(); };
+  UI.t.onclick = () => { shapeType='triangle'; updateShapeButtons(); };
+  updateShapeButtons();
+
+  UI.grav.onclick = () => { GRAVITY.on = !GRAVITY.on; UI.grav.dataset.active = GRAVITY.on; };
+  UI.bnc.onclick  = () => { BOUNCE.on = !BOUNCE.on;   UI.bnc.dataset.active = BOUNCE.on;  };
+  UI.pause.onclick= () => { paused = !paused; UI.pause.dataset.active = paused; };
+  UI.clear.onclick= () => { shapes.length = 0; };
+  UI.shuffle.onclick = () => {
+    for (let i=0;i<8;i++) {
+      addShape(rand(24,80), randomColor(), randomShape(), rand(40, canvas.width/DPR-40), rand(40, canvas.height/DPR-80), rand(-200,200), rand(-400,0));
+    }
+  };
+  UI.export.onclick = () => {
+    // временно снимем матрицу, чтобы экспортировать 1:1 CSS-пиксели
+    const save = ctx.getTransform();
+    ctx.setTransform(1,0,0,1,0,0);
+    const tmp = document.createElement('canvas');
+    tmp.width  = canvas.width;
+    tmp.height = canvas.height;
+    const tctx = tmp.getContext('2d');
+    tctx.drawImage(canvas,0,0);
+    const url = tmp.toDataURL('image/png');
+    ctx.setTransform(save);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'geometry.png'; a.click();
+  };
+
+  // ====== Utils ======
+  const TAU = Math.PI * 2;
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function randomColor(){
+    const h = Math.floor(Math.random()*360);
+    return `hsl(${h}deg 80% 60%)`;
+  }
+  function randomShape(){
+    return ['circle','square','triangle'][Math.floor(Math.random()*3)];
+  }
+
+  // ====== Shapes ======
+  const shapes = [];
+  let idCounter = 1;
+
+  function addShape(size, color, type, x, y, vx=0, vy=0){
+    shapes.push({
+      id: idCounter++,
+      type, x, y, size, color,
+      angle: 0,
+      vx, vy,
+      ax:0, ay:0,
+      spin: rand(-2,2) // rad/s for triangle rotation
+    });
+  }
+
+  // ====== Drawing ======
+  function drawShape(s){
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    if (s.type==='triangle') ctx.rotate(s.angle);
+
+    // shadow & glow
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur = 16;
+
+    ctx.beginPath();
+    switch(s.type){
+      case 'circle':
+        ctx.arc(0,0,s.size/2,0,TAU);
+        break;
+      case 'square':
+        const r = 12;
+        const w = s.size, h = s.size;
+        // rounded rect
+        ctx.moveTo(-w/2+r, -h/2);
+        ctx.arcTo(w/2, -h/2, w/2, h/2, r);
+        ctx.arcTo(w/2, h/2, -w/2, h/2, r);
+        ctx.arcTo(-w/2, h/2, -w/2, -h/2, r);
+        ctx.arcTo(-w/2, -h/2, w/2, -h/2, r);
+        break;
+      case 'triangle':
+        const R = s.size/2;
+        for(let i=0;i<3;i++){
+          const a = -Math.PI/2 + i*TAU/3;
+          const px = Math.cos(a)*R, py = Math.sin(a)*R;
+          i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+        }
+        ctx.closePath();
+        break;
+    }
+    // fill
+    const grad = ctx.createLinearGradient(-s.size/2, -s.size/2, s.size/2, s.size/2);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.001, 'rgba(255,255,255,0.4)');
+    grad.addColorStop(1, s.color);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // subtle stroke
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // ====== Physics ======
+  let last = performance.now();
+  function step(){
+    const now = performance.now();
+    let dt = (now - last)/1000;
+    dt = Math.min(dt, 1/30); // clamp large frames
+    last = now;
+
+    if (!paused) {
+      const W = canvas.clientWidth;
+      const H = canvas.clientHeight;
+      for (const s of shapes){
+        // gravity
+        s.ay = GRAVITY.on ? GRAVITY.g : 0;
+
+        // integrate
+        s.vx += s.ax * dt;
+        s.vy += s.ay * dt;
+        s.x  += s.vx * dt;
+        s.y  += s.vy * dt;
+
+        // spin triangles
+        if (s.type==='triangle') s.angle += s.spin * dt;
+
+        // walls
+        const r = s.size/2;
+        if (s.x - r < 0){ s.x = r; if(BOUNCE.on){ s.vx = -s.vx*BOUNCE.elasticity; } else s.vx=0; }
+        if (s.x + r > W){ s.x = W - r; if(BOUNCE.on){ s.vx = -s.vx*BOUNCE.elasticity; } else s.vx=0; }
+        if (s.y - r < 0){ s.y = r; if(BOUNCE.on){ s.vy = -s.vy*BOUNCE.elasticity; } else s.vy=0; }
+        if (s.y + r > H){ s.y = H - r; if(BOUNCE.on){ s.vy = -Math.abs(s.vy)*BOUNCE.elasticity; } else s.vy=0; }
+      }
+
+      // naive collisions (circle approximations for all)
+      for (let i=0;i<shapes.length;i++){
+        for (let j=i+1;j<shapes.length;j++){
+          const a=shapes[i], b=shapes[j];
+          const ra=a.size/2, rb=b.size/2;
+          const dx=b.x-a.x, dy=b.y-a.y;
+          const d2=dx*dx+dy*dy, r=ra+rb;
+          if (d2>0 && d2 < r*r){
+            const d = Math.sqrt(d2);
+            const nx=dx/d, ny=dy/d;
+            const overlap = r - d;
+            // separate
+            a.x -= nx*overlap/2; a.y -= ny*overlap/2;
+            b.x += nx*overlap/2; b.y += ny*overlap/2;
+            if (BOUNCE.on){
+              // simple elastic impulse along normal
+              const rvx = b.vx - a.vx, rvy = b.vy - a.vy;
+              const vn = rvx*nx + rvy*ny;
+              if (vn < 0){
+                const e = BOUNCE.elasticity;
+                const imp = -(1+e)*vn/2;
+                a.vx -= imp*nx; a.vy -= imp*ny;
+                b.vx += imp*nx; b.vy += imp*ny;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // render
+    ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+    for (const s of shapes) drawShape(s);
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  // ====== Pointer / Touch interaction ======
+  let dragging = null;
+  let lastPos = null;
+  let lastTime = 0;
+  let tapTimer = 0, lastTapId = null;
+
+  function posFromEvent(e){
+    if (e.touches && e.touches[0]) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    } else {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+  }
+  function hitTest(p){
+    // topmost first
+    for (let i=shapes.length-1;i>=0;i--){
+      const s=shapes[i];
+      const r=s.size/2;
+      const dx=p.x-s.x, dy=p.y-s.y;
+      if (dx*dx+dy*dy <= r*r) return s;
+    }
+    return null;
+  }
+
+  function onDown(e){
+    const p = posFromEvent(e);
+    const s = hitTest(p);
+    const now = performance.now();
+
+    if (s){
+      dragging = s;
+      s.vx = s.vy = 0; // stop existing motion
+      lastPos = p;
+      lastTime = now;
+
+      // double tap recolor
+      if (now - tapTimer < 280 && lastTapId === s.id){
+        s.color = document.getElementById('color').value;
+      }
+      tapTimer = now; lastTapId = s.id;
+    } else {
+      // create shape
+      addShape(
+        parseFloat(UI.size.value),
+        UI.color.value,
+        shapeType,
+        p.x, p.y,
+        rand(-30,30), rand(-30,30)
+      );
+      tapTimer = now; lastTapId = null;
+    }
+    e.preventDefault();
+  }
+
+  function onMove(e){
+    if (!dragging) return;
+    const p = posFromEvent(e);
+    const now = performance.now();
+    const dt = (now - lastTime)/1000;
+    // velocity from movement
+    dragging.vx = (p.x - lastPos.x) / Math.max(dt, 1/120);
+    dragging.vy = (p.y - lastPos.y) / Math.max(dt, 1/120);
+    dragging.x = p.x; dragging.y = p.y;
+    lastPos = p; lastTime = now;
+    e.preventDefault();
+  }
+
+  function onUp(e){
+    dragging = null;
+    e.preventDefault();
+  }
+
+  // Touch + mouse
+  canvas.addEventListener('touchstart', onDown, {passive:false});
+  canvas.addEventListener('touchmove',  onMove, {passive:false});
+  canvas.addEventListener('touchend',   onUp,   {passive:false});
+  canvas.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup',   onUp);
+
+  // Start with a couple of shapes
+  for (let i=0;i<6;i++){
+    addShape(rand(30,80), randomColor(), randomShape(), rand(60, canvas.width/DPR-60), rand(60, canvas.height/DPR-120), rand(-100,100), rand(-100,0));
+  }
+})();
+</script>
 </body>
 </html>
