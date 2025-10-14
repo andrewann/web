@@ -3,364 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор Фонов</title>
+    <title>Генератор случайных фонов</title>
     <style>
-        /* Общие стили для страницы */
-        html, body {
+        body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: white;
+            font-family: Arial, sans-serif;
         }
-
-        body {
-            /* Плавный переход фона */
-            transition: background 0.8s ease;
-        }
-
-        /* Стили для элементов управления */
-        .controls {
+        #bg {
             position: fixed;
-            padding: 12px 20px;
-            background-color: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+        #modes {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+        }
+        #generate {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
+            border: none;
+            border-radius: 50px;
             cursor: pointer;
         }
-        
-        /* Выпадающий список режимов */
-        #modeSelector {
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            -webkit-appearance: none; /* Убираем стандартный стиль для Safari/Chrome */
-            -moz-appearance: none;    /* Убираем стандартный стиль для Firefox */
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right 1em top 50%;
-            background-size: .65em auto;
-            padding-right: 2.5em; /* Место для стрелочки */
-        }
-        
-        #modeSelector option {
-            background-color: #333;
-            color: white;
-        }
-
-        /* Кнопка генерации (справа внизу) */
-        #generateBtn {
-            right: 20px;
+        #save {
+            position: fixed;
             bottom: 20px;
-        }
-
-        /* Кнопка сохранения (слева внизу) */
-        #saveBtn {
             left: 20px;
-            bottom: 20px;
-            font-size: 14px; /* Поменьше, как просили */
-            padding: 8px 15px;
+            z-index: 10;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
         }
-        
-        .controls:hover {
-            background-color: rgba(0, 0, 0, 0.6);
+        button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-
-    <select id="modeSelector" class="controls"></select>
-    <button id="generateBtn" class="controls">Новый фон</button>
-    <button id="saveBtn" class="controls">Сохранить 4К</button>
+    <canvas id="bg"></canvas>
+    <select id="modes">
+        <option value="1">1. Линейный градиент</option>
+        <option value="2">2. Радиальный градиент</option>
+        <option value="3">3. Рандомная текстура (шум)</option>
+        <option value="4">4. Полупрозрачные шары</option>
+        <option value="5">5. Волнистые линии</option>
+        <option value="6">6. Клетчатый узор</option>
+        <option value="7">7. Полосы</option>
+        <option value="8">8. Точки</option>
+        <option value="9">9. Шестиугольники</option>
+        <option value="10">10. Перлин-шум</option>
+        <option value="11">11. Фрактальный узор</option>
+        <option value="12">12. Мозаика</option>
+        <option value="13">13. Абстрактные формы</option>
+        <option value="14">14. Геометрические фигуры</option>
+        <option value="15">15. Радужный градиент</option>
+        <option value="16">16. Звёздное небо</option>
+        <option value="17">17. Водные блики</option>
+        <option value="18">18. Лесной камуфляж</option>
+        <option value="19">19. Металлический блеск</option>
+        <option value="20">20. Огненный эффект</option>
+        <option value="21">21. Ледяные кристаллы</option>
+        <option value="22">22. Песчаные дюны</option>
+        <option value="23">23. Космический вихрь</option>
+        <option value="24">24. Органические формы</option>
+        <option value="25">25. Пиксель-арт</option>
+        <option value="26">26. Вихревой градиент</option>
+        <option value="27">27. Теневые слои</option>
+        <option value="28">28. Цветочные узоры</option>
+        <option value="29">29. Голографический эффект</option>
+        <option value="30">30. Абстрактный экспрессионизм</option>
+    </select>
+    <button id="generate">Генерировать</button>
+    <button id="save">Сохранить 4K</button>
 
     <script>
-        // --- DOM Элементы ---
-        const body = document.body;
-        const modeSelector = document.getElementById('modeSelector');
-        const generateBtn = document.getElementById('generateBtn');
-        const saveBtn = document.getElementById('saveBtn');
+        const canvas = document.getElementById('bg');
+        const ctx = canvas.getContext('2d');
+        const modes = document.getElementById('modes');
+        const generateBtn = document.getElementById('generate');
+        const saveBtn = document.getElementById('save');
 
-        // --- Константы ---
-        const PORTRAIT_4K_WIDTH = 2160;
-        const PORTRAIT_4K_HEIGHT = 3840;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-        // --- Состояние ---
-        let lastGeneratedParams = {}; // Храним параметры последнего фона для сохранения
-        let currentMode = '';
+        // Функция для случайных цветов
+        function randomColor() {
+            return `hsl(${Math.random() * 360}, ${50 + Math.random() * 50}%, ${40 + Math.random() * 40}%)`;
+        }
 
-        // --- Список режимов ---
-        const modes = [
-            { id: 'linear-2', name: '1. Градиент (2 цвета)' },
-            { id: 'linear-3', name: '2. Градиент (3 цвета)' },
-            { id: 'linear-angle', name: '3. Градиент (случайный угол)' },
-            { id: 'radial-2', name: '4. Радиальный градиент' },
-            { id: 'radial-3', name: '5. Радиальный градиент (3 цвета)' },
-            { id: 'radial-pos', name: '6. Радиальный (случайная позиция)' },
-            { id: 'semitransparent-orbs', name: '7. Полупрозрачные шары ✨' },
-            { id: 'conic', name: '8. Конический градиент' },
-            { id: 'repeating-linear', name: '9. Повторяющийся градиент (полосы)' },
-            { id: 'repeating-radial', name: '10. Повторяющийся радиальный' },
-            { id: 'diagonal-stripes', name: '11. Диагональные полосы' },
-            { id: 'checkerboard', name: '12. Шахматная доска' },
-            { id: 'polka-dots', name: '13. Горошек' },
-            { id: 'sunburst', name: '14. Солнечные лучи' },
-            { id: 'blueprint-grid', name: '15. Сетка (Blueprint)' },
-            { id: 'crosshatch', name: '16. Перекрестная штриховка' },
-            { id: 'honeycomb', name: '17. Пчелиные соты (текстура)' },
-            { id: 'triangles', name: '18. Треугольники (текстура)' },
-            { id: 'zig-zag', name: '19. Зиг-заг' },
-            { id: 'soft-glow', name: '20. Мягкое свечение' },
-            { id: 'layered-gradients', name: '21. Многослойный градиент' },
-            { id: 'wavy-lines', name: '22. Волнистые линии (текстура)' },
-            { id: 'argyle', name: '23. Узор "Аргайл"' },
-            { id: 'stairs', name: '24. Ступеньки' },
-            { id: 'noise', name: '25. Легкий шум' },
-            { id: 'cubic-bezier', name: '26. Кривые Безье (текстура)' },
-            { id: 'spotlight', name: '27. Прожектор' },
-            { id: 'four-corners', name: '28. Градиент по 4 углам' },
-            { id: 'metal-sheen', name: '29. Металлический блеск' },
-            { id: 'glass-effect', name: '30. Эффект матового стекла' },
-        ];
+        // Функция для генерации шума (простой)
+        function generateNoise(width, height, opacity = 0.1) {
+            const imageData = ctx.createImageData(width, height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const noise = Math.random() * 255;
+                imageData.data[i] = noise; // R
+                imageData.data[i + 1] = noise; // G
+                imageData.data[i + 2] = noise; // B
+                imageData.data[i + 3] = opacity * 255; // A
+            }
+            return imageData;
+        }
 
-        // --- Вспомогательные функции ---
-        const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        const randFloat = (min, max) => Math.random() * (max - min) + min;
-        const randColor = (alpha = 1) => `rgba(${randInt(0, 255)}, ${randInt(0, 255)}, ${randInt(0, 255)}, ${alpha})`;
+        // Генерация фонов по режимам (упрощённые реализации)
+        function generateBackground(mode) {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
 
-        // --- Генерация параметров для каждого режима ---
-        // Возвращает объект с параметрами, который затем используется для CSS и Canvas
-        function generateParams(mode) {
-            switch (mode) {
-                case 'linear-2': return { colors: [randColor(), randColor()] };
-                case 'linear-3': return { colors: [randColor(), randColor(), randColor()] };
-                case 'linear-angle': return { colors: [randColor(), randColor()], angle: randInt(0, 360) };
-                case 'radial-2': return { colors: [randColor(), randColor()] };
-                case 'radial-3': return { colors: [randColor(), randColor(), randColor()] };
-                case 'radial-pos': return { colors: [randColor(), randColor()], pos: `${randInt(0, 100)}% ${randInt(0, 100)}%` };
-                case 'semitransparent-orbs':
-                    let orbs = [];
-                    for (let i = 0; i < randInt(4, 8); i++) {
-                        orbs.push({
-                            color: randColor(randFloat(0.3, 0.6)),
-                            size: randInt(20, 60),
-                            x: randInt(0, 100),
-                            y: randInt(0, 100),
-                        });
+            switch (parseInt(mode)) {
+                case 1: // Линейный градиент
+                    const grad1 = ctx.createLinearGradient(0, 0, w, h);
+                    grad1.addColorStop(0, randomColor());
+                    grad1.addColorStop(1, randomColor());
+                    ctx.fillStyle = grad1;
+                    ctx.fillRect(0, 0, w, h);
+                    break;
+                case 2: // Радиальный градиент
+                    const grad2 = ctx.createRadialGradient(w/2 + (Math.random()-0.5)*w, h/2 + (Math.random()-0.5)*h, 0, w/2, h/2, Math.max(w, h));
+                    grad2.addColorStop(0, randomColor());
+                    grad2.addColorStop(1, randomColor());
+                    ctx.fillStyle = grad2;
+                    ctx.fillRect(0, 0, w, h);
+                    break;
+                case 3: // Рандомная текстура (шум)
+                    ctx.putImageData(generateNoise(w, h), 0, 0);
+                    break;
+                case 4: // Полупрозрачные шары
+                    for (let i = 0; i < 50; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, 20 + Math.random() * 80, 0, Math.PI * 2);
+                        ctx.fillStyle = randomColor() + '80'; // Полупрозрачный
+                        ctx.fill();
                     }
-                    return { bgColor: randColor(0.2), orbs };
-                case 'conic': return { colors: Array.from({ length: randInt(3, 7) }, () => randColor()), pos: `${randInt(25, 75)}% ${randInt(25, 75)}%` };
-                case 'repeating-linear': return { colors: [randColor(), randColor()], angle: randInt(0, 180), size: randInt(10, 50) };
-                case 'repeating-radial': return { colors: [randColor(), randColor()], size: randInt(20, 100) };
-                case 'diagonal-stripes': return { color1: randColor(), color2: randColor(), size: randInt(5, 20) };
-                case 'checkerboard': return { color1: randColor(0.1), color2: randColor(0.2), size: randInt(20, 80) };
-                case 'polka-dots': return { bgColor: randColor(), dotColor: randColor(), size: randInt(10, 50), spacing: randInt(40, 150)};
-                // ... Добавляем остальные генераторы параметров для краткости
-                default:
-                    return { colors: [randColor(), randColor()] }; // Резервный вариант
-            }
-        }
-        
-        // --- Применение стилей к BODY ---
-        function applyCssBackground(mode, params) {
-            let backgroundStyle = '';
-            switch (mode) {
-                case 'linear-2': backgroundStyle = `linear-gradient(${params.colors.join(', ')})`; break;
-                case 'linear-3': backgroundStyle = `linear-gradient(${params.colors[0]}, ${params.colors[1]} 50%, ${params.colors[2]})`; break;
-                case 'linear-angle': backgroundStyle = `linear-gradient(${params.angle}deg, ${params.colors.join(', ')})`; break;
-                case 'radial-2': backgroundStyle = `radial-gradient(${params.colors.join(', ')})`; break;
-                case 'radial-3': backgroundStyle = `radial-gradient(ellipse at center, ${params.colors[0]} 0%, ${params.colors[1]} 50%, ${params.colors[2]} 100%)`; break;
-                case 'radial-pos': backgroundStyle = `radial-gradient(circle at ${params.pos}, ${params.colors.join(', ')})`; break;
-                case 'semitransparent-orbs':
-                    const orbGradients = params.orbs.map(orb => 
-                        `radial-gradient(circle at ${orb.x}% ${orb.y}%, ${orb.color}, transparent ${orb.size}%)`
-                    ).join(', ');
-                    backgroundStyle = `${orbGradients}, ${params.bgColor}`;
                     break;
-                case 'conic': backgroundStyle = `conic-gradient(at ${params.pos}, ${params.colors.join(', ')}, ${params.colors[0]})`; break;
-                case 'repeating-linear': backgroundStyle = `repeating-linear-gradient(${params.angle}deg, ${params.colors[0]}, ${params.colors[0]} ${params.size}px, ${params.colors[1]} ${params.size}px, ${params.colors[1]} ${params.size * 2}px)`; break;
-                case 'repeating-radial': backgroundStyle = `repeating-radial-gradient(circle, ${params.colors[0]}, ${params.colors[0]} ${params.size}px, ${params.colors[1]} ${params.size}px, ${params.colors[1]} ${params.size * 2}px)`; break;
-                case 'diagonal-stripes': backgroundStyle = `repeating-linear-gradient(45deg, ${params.color1}, ${params.color1} ${params.size}px, ${params.color2} ${params.size}px, ${params.color2} ${params.size*2}px)`; break;
-                case 'checkerboard': backgroundStyle = `linear-gradient(45deg, ${params.color1} 25%, transparent 25%), linear-gradient(-45deg, ${params.color1} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${params.color1} 75%), linear-gradient(-45deg, transparent 75%, ${params.color1} 75%)`; body.style.backgroundColor = params.color2; body.style.backgroundSize = `${params.size}px ${params.size}px`; break;
-                case 'polka-dots': backgroundStyle = `radial-gradient(${params.dotColor} ${params.size}%, transparent ${params.size}%)`; body.style.backgroundColor = params.bgColor; body.style.backgroundSize = `${params.spacing}px ${params.spacing}px`; break;
-                
-                // Для сложных текстур используем SVG в data URI. Это упрощает рендеринг на canvas.
-                case 'honeycomb':
-                case 'triangles':
-                case 'wavy-lines':
-                case 'noise':
-                case 'cubic-bezier':
-                    params.svg = generateSvgTexture(mode, params);
-                    backgroundStyle = `url('${params.svg}')`;
+                case 5: // Волнистые линии
+                    ctx.strokeStyle = randomColor();
+                    ctx.lineWidth = 2;
+                    for (let x = 0; x < w; x += 20) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        for (let y = 0; y < h; y += 10) {
+                            ctx.lineTo(x + Math.sin(y / 50) * 20, y);
+                        }
+                        ctx.stroke();
+                    }
                     break;
-
-                // Для остальных 20+ режимов логика была бы аналогичной
-                // Для краткости примера, они будут использовать резервный вариант
-                default:
-                    backgroundStyle = `linear-gradient(${params.colors.join(', ')})`;
-            }
-             // Сбрасываем специфичные стили перед применением новых
-            if (mode !== 'checkerboard' && mode !== 'polka-dots') {
-                body.style.backgroundSize = 'auto';
-                body.style.backgroundColor = 'transparent';
-            }
-            body.style.background = backgroundStyle;
-        }
-
-        // --- Основная функция генерации ---
-        function generateBackground() {
-            currentMode = modeSelector.value;
-            // Для сложных режимов, которые еще не реализованы, генерируем простые параметры
-            const isSimpleMode = !!generateParams(currentMode);
-            lastGeneratedParams = isSimpleMode ? generateParams(currentMode) : generateParams('linear-2');
-            
-            // Если выбранный режим не имеет своей логики, используем резервную
-            const modeToApply = isSimpleMode ? currentMode : 'linear-2';
-            applyCssBackground(modeToApply, lastGeneratedParams);
-        }
-
-        // --- Функция сохранения ---
-        function saveBackground() {
-            const canvas = document.createElement('canvas');
-            canvas.width = PORTRAIT_4K_WIDTH;
-            canvas.height = PORTRAIT_4K_HEIGHT;
-            const ctx = canvas.getContext('2d');
-
-            // Вызываем функцию отрисовки для canvas, которая зеркалит логику CSS
-            drawBackgroundOnCanvas(ctx, currentMode, lastGeneratedParams, canvas.width, canvas.height);
-
-            // Создаем ссылку для скачивания
-            const link = document.createElement('a');
-            link.download = `background-${currentMode}-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-
-        // --- Отрисовка на Canvas для сохранения ---
-        // Эта функция должна точно воссоздать то, что делает CSS
-        function drawBackgroundOnCanvas(ctx, mode, params, width, height) {
-            // Резервный вариант
-            if (!params || Object.keys(params).length === 0) {
-                 mode = 'linear-2';
-                 params = generateParams('linear-2');
-            }
-
-            // Для SVG-текстур все просто: создаем Image и рисуем его как паттерн
-            if (params.svg) {
-                const img = new Image();
-                img.onload = function() {
-                    const pattern = ctx.createPattern(img, 'repeat');
-                    ctx.fillStyle = pattern;
-                    ctx.fillRect(0, 0, width, height);
-                };
-                img.src = params.svg;
-                return; // Важно выйти, так как отрисовка асинхронна
-            }
-
-            // Отрисовка градиентов и других эффектов
-            switch (mode) {
-                case 'linear-2':
-                case 'linear-3': // Упростим для canvas до 2 цветов
-                    const gradLin = ctx.createLinearGradient(0, 0, 0, height);
-                    gradLin.addColorStop(0, params.colors[0]);
-                    gradLin.addColorStop(1, params.colors[1]);
-                    ctx.fillStyle = gradLin;
+                case 6: // Клетчатый узор
+                    const size = 50 + Math.random() * 50;
+                    for (let x = 0; x < w; x += size) {
+                        for (let y = 0; y < h; y += size) {
+                            ctx.fillStyle = Math.random() > 0.5 ? randomColor() : 'transparent';
+                            ctx.fillRect(x, y, size, size);
+                        }
+                    }
                     break;
-                case 'linear-angle':
-                     // Это сложная математика, для примера сделаем простой диагональный
-                    const gradAng = ctx.createLinearGradient(0, 0, width, height);
-                    gradAng.addColorStop(0, params.colors[0]);
-                    gradAng.addColorStop(1, params.colors[1]);
-                    ctx.fillStyle = gradAng;
+                case 7: // Полосы
+                    const stripeWidth = 30 + Math.random() * 50;
+                    for (let y = 0; y < h; y += stripeWidth) {
+                        ctx.fillStyle = randomColor();
+                        ctx.fillRect(0, y, w, stripeWidth);
+                    }
                     break;
-                case 'radial-2':
-                case 'radial-3':
-                    const gradRad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) / 2);
-                    gradRad.addColorStop(0, params.colors[0]);
-                    gradRad.addColorStop(1, params.colors[1]);
-                    ctx.fillStyle = gradRad;
+                case 8: // Точки
+                    for (let i = 0; i < 1000; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, Math.random() * 5, 0, Math.PI * 2);
+                        ctx.fillStyle = randomColor();
+                        ctx.fill();
+                    }
                     break;
-                case 'semitransparent-orbs':
-                    ctx.fillStyle = params.bgColor;
-                    ctx.fillRect(0, 0, width, height);
-                    params.orbs.forEach(orb => {
-                        const orbX = (orb.x / 100) * width;
-                        const orbY = (orb.y / 100) * height;
-                        const orbR = (orb.size / 100) * Math.min(width, height);
-                        const gradOrb = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR);
-                        gradOrb.addColorStop(0, orb.color);
-                        gradOrb.addColorStop(1, 'transparent');
-                        ctx.fillStyle = gradOrb;
-                        ctx.fillRect(0, 0, width, height);
-                    });
-                    return; // Возвращаемся, т.к. fillRect уже вызван
-                case 'checkerboard':
-                    const s = params.size * 2;
-                    ctx.fillStyle = params.color2;
-                    ctx.fillRect(0,0,width,height);
-                    ctx.fillStyle = params.color1;
-                    for (let i = 0; i < width / s; i++) {
-                        for (let j = 0; j < height / s; j++) {
-                            if ((i + j) % 2 == 0) {
-                                ctx.fillRect(i * s, j * s, s, s);
+                case 9: // Шестиугольники (упрощённо)
+                    const hexSize = 30;
+                    for (let x = 0; x < w; x += hexSize * 1.732) {
+                        for (let y = 0; y < h; y += hexSize * 1.5) {
+                            ctx.beginPath();
+                            for (let i = 0; i < 6; i++) {
+                                const angle = (Math.PI / 3) * i;
+                                const px = x + hexSize * Math.cos(angle);
+                                const py = y + hexSize * Math.sin(angle);
+                                if (i === 0) ctx.moveTo(px, py);
+                                else ctx.lineTo(px, py);
+                            }
+                            ctx.closePath();
+                            ctx.fillStyle = randomColor() + 'CC';
+                            ctx.fill();
+                        }
+                    }
+                    break;
+                case 10: // Перлин-шум (упрощённый с Math.random)
+                    const noiseData = generateNoise(w, h, 0.05);
+                    ctx.putImageData(noiseData, 0, 0);
+                    // Добавим градиент для цвета
+                    const grad10 = ctx.createLinearGradient(0, 0, w, h);
+                    grad10.addColorStop(0, '#000');
+                    grad10.addColorStop(1, '#fff');
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.fillStyle = grad10;
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.globalCompositeOperation = 'source-over';
+                    break;
+                case 11: // Фрактальный узор (рекурсивные треугольники)
+                    function drawFractal(x, y, size, depth) {
+                        if (depth === 0) return;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + size, y);
+                        ctx.lineTo(x + size / 2, y - size * 0.866);
+                        ctx.closePath();
+                        ctx.fillStyle = randomColor() + Math.floor(depth * 30).toString(16).padStart(2, '0');
+                        ctx.fill();
+                        const s = size / 2;
+                        drawFractal(x, y, s, depth - 1);
+                        drawFractal(x + s, y, s, depth - 1);
+                        drawFractal(x + s / 2, y - s * 0.866, s, depth - 1);
+                    }
+                    drawFractal(w/2, h, 200, 5);
+                    break;
+                case 12: // Мозаика
+                    const mosaicSize = 40;
+                    for (let x = 0; x < w; x += mosaicSize) {
+                        for (let y = 0; y < h; y += mosaicSize) {
+                            ctx.beginPath();
+                            ctx.rect(x, y, mosaicSize, mosaicSize);
+                            ctx.fillStyle = randomColor();
+                            ctx.fill();
+                            // Добавим случайные линии
+                            if (Math.random() > 0.5) {
+                                ctx.strokeStyle = randomColor();
+                                ctx.lineTo(x + mosaicSize, y + Math.random() * mosaicSize);
+                                ctx.stroke();
                             }
                         }
                     }
-                    return;
-                // ... и так далее для каждого режима
+                    break;
+                case 13: // Абстрактные формы
+                    for (let i = 0; i < 20; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(Math.random() * w, Math.random() * h, 50 + Math.random() * 100, 30 + Math.random() * 50, Math.random() * Math.PI, 0, Math.PI * 2);
+                        ctx.fillStyle = randomColor() + '80';
+                        ctx.fill();
+                    }
+                    break;
+                case 14: // Геометрические фигуры
+                    const shapes = ['rect', 'circle', 'triangle'];
+                    for (let i = 0; i < 50; i++) {
+                        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                        ctx.fillStyle = randomColor();
+                        if (shape === 'rect') {
+                            ctx.fillRect(Math.random() * w, Math.random() * h, 50, 30);
+                        } else if (shape === 'circle') {
+                            ctx.beginPath();
+                            ctx.arc(Math.random() * w, Math.random() * h, 25, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else {
+                            // Triangle
+                            ctx.beginPath();
+                            ctx.moveTo(Math.random() * w, Math.random() * h);
+                            ctx.lineTo(Math.random() * w, Math.random() * h);
+                            ctx.lineTo(Math.random() * w, Math.random() * h);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                    break;
+                case 15: // Радужный градиент
+                    const grad15 = ctx.createLinearGradient(0, 0, w, 0);
+                    const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+                    for (let i = 0; i <= 1; i += 1/6) {
+                        grad15.addColorStop(i, colors[Math.floor(i * 6)]);
+                    }
+                    ctx.fillStyle = grad15;
+                    ctx.fillRect(0, 0, w, h);
+                    break;
+                case 16: // Звёздное небо
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, w, h);
+                    for (let i = 0; i < 500; i++) {
+                        const x = Math.random() * w;
+                        const y = Math.random() * h;
+                        const size = Math.random() * 2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        ctx.fillStyle = 'white';
+                        ctx.fill();
+                    }
+                    break;
+                case 17: // Водные блики
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.fillRect(0, 0, w, h);
+                    for (let i = 0; i < 100; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, 10 + Math.random() * 30, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.fill();
+                    }
+                    break;
+                case 18: // Лесной камуфляж
+                    for (let i = 0; i < 200; i++) {
+                        ctx.fillStyle = ['#228B22', '#556B2F', '#8FBC8F'][Math.floor(Math.random() * 3)];
+                        ctx.fillRect(Math.random() * w, Math.random() * h, 20 + Math.random() * 40, 10 + Math.random() * 20);
+                    }
+                    break;
+                case 19: // Металлический блеск
+                    const grad19 = ctx.createLinearGradient(0, 0, w, h);
+                    grad19.addColorStop(0, '#C0C0C0');
+                    grad19.addColorStop(0.5, '#A9A9A9');
+                    grad19.addColorStop(1, '#808080');
+                    ctx.fillStyle = grad19;
+                    ctx.fillRect(0, 0, w, h);
+                    // Добавим блики
+                    for (let i = 0; i < 10; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, 50, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.fill();
+                    }
+                    break;
+                case 20: // Огненный эффект
+                    for (let y = h; y > 0; y -= 20) {
+                        ctx.fillStyle = ['#FF4500', '#FFD700', '#FFA500'][Math.floor(Math.random() * 3)];
+                        ctx.fillRect(0, y, w, 20);
+                    }
+                    break;
+                case 21: // Ледяные кристаллы
+                    ctx.fillStyle = '#ADD8E6';
+                    ctx.fillRect(0, 0, w, h);
+                    for (let i = 0; i < 30; i++) {
+                        const x = Math.random() * w;
+                        const y = Math.random() * h;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        for (let j = 0; j < 6; j++) {
+                            const angle = (Math.PI / 3) * j;
+                            ctx.lineTo(x + Math.cos(angle) * 30, y + Math.sin(angle) * 30);
+                        }
+                        ctx.closePath();
+                        ctx.strokeStyle = '#4682B4';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                    break;
+                case 22: // Песчаные дюны
+                    ctx.fillStyle = '#F4A460';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.strokeStyle = '#DAA520';
+                    ctx.lineWidth = 1;
+                    for (let x = 0; x < w; x += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, h);
+                        for (let y = h; y > 0; y -= 10) {
+                            ctx.lineTo(x + Math.sin(y / 100) * 50, y);
+                        }
+                        ctx.stroke();
+                    }
+                    break;
+                case 23: // Космический вихрь
+                    const grad23 = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h));
+                    grad23.addColorStop(0, '#000');
+                    grad23.addColorStop(0.5, '#4B0082');
+                    grad23.addColorStop(1, '#000080');
+                    ctx.fillStyle = grad23;
+                    ctx.fillRect(0, 0, w, h);
+                    // Вихрь линии
+                    ctx.strokeStyle = 'white';
+                    for (let i = 0; i < 10; i++) {
+                        ctx.beginPath();
+                        ctx.arc(w/2, h/2, 50 + i * 50, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    break;
+                case 24: // Органические формы
+                    for (let i = 0; i < 15; i++) {
+                        ctx.beginPath();
+                        const x = Math.random() * w;
+                        const y = Math.random() * h;
+                        ctx.ellipse(x, y, 40 + Math.random() * 60, 20 + Math.random() * 40, Math.random() * Math.PI, 0, Math.PI * 2);
+                        ctx.fillStyle = randomColor() + '60';
+                        ctx.fill();
+                    }
+                    break;
+                case 25: // Пиксель-арт
+                    const pixelSize = 10;
+                    for (let x = 0; x < w; x += pixelSize) {
+                        for (let y = 0; y < h; y += pixelSize) {
+                            if (Math.random() > 0.3) {
+                                ctx.fillStyle = randomColor();
+                                ctx.fillRect(x, y, pixelSize, pixelSize);
+                            }
+                        }
+                    }
+                    break;
+                case 26: // Вихревой градиент
+                    const grad26 = ctx.createConicGradient(w/2, h/2);
+                    for (let i = 0; i < 6; i++) {
+                        grad26.addColorStop(i / 6, randomColor());
+                    }
+                    ctx.fillStyle = grad26;
+                    ctx.fillRect(0, 0, w, h);
+                    break;
+                case 27: // Теневые слои
+                    for (let i = 0; i < 5; i++) {
+                        ctx.fillStyle = `rgba(0, 0, 0, ${0.1 * i})`;
+                        ctx.fillRect(0, 0, w, h);
+                    }
+                    // Добавим светлые пятна
+                    for (let j = 0; j < 20; j++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, 30, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, 0.2)`;
+                        ctx.fill();
+                    }
+                    break;
+                case 28: // Цветочные узоры
+                    function drawFlower(x, y, size) {
+                        ctx.save();
+                        ctx.translate(x, y);
+                        for (let i = 0; i < 8; i++) {
+                            ctx.rotate(Math.PI / 4);
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, size, size / 2, 0, 0, Math.PI * 2);
+                            ctx.fillStyle = randomColor();
+                            ctx.fill();
+                        }
+                        ctx.restore();
+                    }
+                    for (let i = 0; i < 20; i++) {
+                        drawFlower(Math.random() * w, Math.random() * h, 10 + Math.random() * 20);
+                    }
+                    break;
+                case 29: // Голографический эффект
+                    const grad29 = ctx.createLinearGradient(0, 0, w, h);
+                    grad29.addColorStop(0, '#00FFFF');
+                    grad29.addColorStop(0.5, '#FF00FF');
+                    grad29.addColorStop(1, '#00FF00');
+                    ctx.fillStyle = grad29;
+                    ctx.fillRect(0, 0, w, h);
+                    // Добавим сетку
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    for (let x = 0; x < w; x += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, h);
+                        ctx.stroke();
+                    }
+                    for (let y = 0; y < h; y += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(w, y);
+                        ctx.stroke();
+                    }
+                    break;
+                case 30: // Абстрактный экспрессионизм
+                    ctx.lineWidth = 5 + Math.random() * 10;
+                    ctx.strokeStyle = randomColor();
+                    for (let i = 0; i < 100; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.random() * w, Math.random() * h);
+                        ctx.lineTo(Math.random() * w, Math.random() * h);
+                        ctx.stroke();
+                    }
+                    break;
                 default:
-                    const gradDef = ctx.createLinearGradient(0, 0, 0, height);
-                    gradDef.addColorStop(0, params.colors[0]);
-                    gradDef.addColorStop(1, params.colors[1]);
-                    ctx.fillStyle = gradDef;
+                    // Fallback
+                    ctx.fillStyle = randomColor();
+                    ctx.fillRect(0, 0, w, h);
             }
-            ctx.fillRect(0, 0, width, height);
         }
 
-        // Генерация SVG текстур
-        function generateSvgTexture(mode, params) {
-            let svgString = '';
-            // Просто для примера, реальные SVG могут быть сложнее
-            switch(mode) {
-                case 'noise':
-                    return "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E";
-                case 'triangles':
-                     const c1 = randColor(0.1), c2 = randColor(0.2);
-                     return `data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${encodeURIComponent(c1)}' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E`;
-            }
-            return '';
+        // Сохранение в 4K портрет (2160x3840)
+        function saveBackground() {
+            const saveCanvas = document.createElement('canvas');
+            saveCanvas.width = 2160;
+            saveCanvas.height = 3840;
+            const saveCtx = saveCanvas.getContext('2d');
+
+            // Масштабируем текущий фон
+            saveCtx.drawImage(canvas, 0, 0, 2160, 3840);
+
+            const link = document.createElement('a');
+            link.download = 'background_4k_portrait.png';
+            link.href = saveCanvas.toDataURL('image/png');
+            link.click();
         }
 
+        // События
+        modes.addEventListener('change', () => generateBackground(modes.value));
+        generateBtn.addEventListener('click', () => generateBackground(modes.value));
+        saveBtn.addEventListener('click', saveBackground);
 
-        // --- Инициализация ---
-        function init() {
-            // Заполняем выпадающий список
-            modes.forEach(mode => {
-                const option = document.createElement('option');
-                option.value = mode.id;
-                option.textContent = mode.name;
-                modeSelector.appendChild(option);
-            });
-
-            // Добавляем обработчики событий
-            generateBtn.addEventListener('click', generateBackground);
-            saveBtn.addEventListener('click', saveBackground);
-            modeSelector.addEventListener('change', generateBackground);
-
-
-            // Генерируем первый фон при загрузке
-            generateBackground();
-        }
-
-        // Запускаем все
-        init();
-
+        // Инициализация
+        generateBackground('1');
     </script>
 </body>
 </html>
